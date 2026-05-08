@@ -233,7 +233,7 @@ Phase 1 シナリオで主に使用: **男性一人部屋３（夜・照明ON）
 | embarrassed | lize-embarrassed1〜5.png | 5 |
 | sad | lize-sad1〜3.png | 3 |
 | scared | lize-scared1〜2.png | 2 |
-| normal（デフォルト） | → `lize-happy1.png` を使用 | — |
+| normal（デフォルト） | lize-normal1〜5.png | 5 |
 
 各感情で複数バリアントが存在するため、`emotion_map` を拡張してバリアント番号もサポートする（例: `"scared_1"`, `"scared_2"`）。
 
