@@ -1,0 +1,37 @@
+{
+  "characters": [
+    {
+      "id": "rize",
+      "name": "リゼ・ヘルエスタ",
+      "sprites": {
+        "normal_1": "images/characters/lize/lize-normal1.png",
+        "normal_2": "images/characters/lize/lize-normal2.png",
+        "normal_3": "images/characters/lize/lize-normal3.png",
+        "normal_4": "images/characters/lize/lize-normal4.png",
+        "normal_5": "images/characters/lize/lize-normal5.png",
+        "happy_1": "images/characters/lize/lize-happy1.png",
+        "happy_2": "images/characters/lize/lize-happy2.png",
+        "happy_3": "images/characters/lize/lize-happy3.png",
+        "happy_4": "images/characters/lize/lize-happy4.png",
+        "embarrassed_1": "images/characters/lize/lize-embarrassed1.png",
+        "embarrassed_2": "images/characters/lize/lize-embarrassed2.png",
+        "embarrassed_3": "images/characters/lize/lize-embarrassed3.png",
+        "embarrassed_4": "images/characters/lize/lize-embarrassed4.png",
+        "embarrassed_5": "images/characters/lize/lize-embarrassed5.png",
+        "sad_1": "images/characters/lize/lize-sad1.png",
+        "sad_2": "images/characters/lize/lize-sad2.png",
+        "sad_3": "images/characters/lize/lize-sad3.png",
+        "scared_1": "images/characters/lize/lize-scared1.png",
+        "scared_2": "images/characters/lize/lize-scared2.png"
+      },
+      "emotion_map": {
+        "default": "normal_1",
+        "normal": "normal_1",
+        "happy": "happy_1",
+        "embarrassed": "embarrassed_1",
+        "sad": "sad_1",
+        "scared": "scared_1"
+      }
+    }
+  ]
+}

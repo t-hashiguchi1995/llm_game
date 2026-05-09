@@ -1,0 +1,49 @@
+{
+  "endings": [
+    {
+      "id": "ending-true",
+      "label": "トゥルーハッピーエンド",
+      "condition": {
+        "sweetness": { "min": 80 },
+        "curiosity": { "min": 80 },
+        "trust": { "min": 80 }
+      },
+      "priority": 1,
+      "cg": null,
+      "text": "朝の光が差し込む頃、ふたりはまだ話していた。言葉は少なくなっていたけれど、その沈黙は温かかった。「また明日ね」と彼女は言った。その声は、いつもより少しだけ柔らかかった。"
+    },
+    {
+      "id": "ending-normal",
+      "label": "ノーマルハッピーエンド",
+      "condition": {
+        "sweetness": { "min": 70 },
+        "trust": { "min": 70 },
+        "curiosity": { "max": 49 }
+      },
+      "priority": 2,
+      "cg": null,
+      "text": "穏やかな夜が過ぎて、ふたりは静かに眠りについた。特別なことは何もなかったけれど、隣にいるだけで十分だった。そういう夜が、続いていけばいいと思った。"
+    },
+    {
+      "id": "ending-dark",
+      "label": "依存ダークエンド",
+      "condition": {
+        "curiosity": { "min": 70 },
+        "trust": { "max": 30 }
+      },
+      "priority": 3,
+      "cg": null,
+      "text": "彼女の目に宿る光は、もはや純粋なものではなかった。刺激を求める眼差し。それが愛情なのか、依存なのか、もう彼女自身にも分からなかった。深夜はいつまでも続く。"
+    },
+    {
+      "id": "ending-bad",
+      "label": "バッドエンド",
+      "condition": {
+        "trust": { "max": 15 }
+      },
+      "priority": 4,
+      "cg": null,
+      "text": "「もう、帰って」。彼女の声は静かで、だからこそ重かった。扉が閉まる音がした。夜はまだ長いのに、部屋はもう暗かった。"
+    }
+  ]
+}

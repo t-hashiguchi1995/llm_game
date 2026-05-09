@@ -1,0 +1,24 @@
+{
+  "commands": [
+    { "id": "cmd-talk-001", "label": "今日の配信どうだった？", "category": "会話" },
+    { "id": "cmd-talk-002", "label": "好きなもの聞かせて", "category": "会話" },
+    { "id": "cmd-talk-003", "label": "最近何か悩んでる？", "category": "会話" },
+    { "id": "cmd-talk-004", "label": "一緒に何かしたいな", "category": "会話" },
+    { "id": "cmd-talk-005", "label": "夜更かしが多いね", "category": "会話" },
+    { "id": "cmd-touch-001", "label": "隣に座ってもいい？", "category": "スキンシップ" },
+    { "id": "cmd-touch-002", "label": "手を繋いでもいい？", "category": "スキンシップ" },
+    { "id": "cmd-touch-003", "label": "頭撫でていい？", "category": "スキンシップ" },
+    { "id": "cmd-touch-004", "label": "抱きしめていい？", "category": "スキンシップ" },
+    { "id": "cmd-touch-005", "label": "もっと近くに来て", "category": "スキンシップ" },
+    { "id": "cmd-support-001", "label": "疲れてるなら休もうか", "category": "サポート" },
+    { "id": "cmd-support-002", "label": "飲み物持ってくるね", "category": "サポート" },
+    { "id": "cmd-support-003", "label": "一緒に寝てもいいよ", "category": "サポート" },
+    { "id": "cmd-support-004", "label": "悩みがあるなら聞くよ", "category": "サポート" },
+    { "id": "cmd-support-005", "label": "明日は早く寝ようね", "category": "サポート" },
+    { "id": "cmd-suggest-001", "label": "着替えを手伝おうか", "category": "提案" },
+    { "id": "cmd-suggest-002", "label": "映画でも観ない？", "category": "提案" },
+    { "id": "cmd-suggest-003", "label": "一緒にお風呂入る？", "category": "提案" },
+    { "id": "cmd-suggest-004", "label": "そっちに行っていい？", "category": "提案" },
+    { "id": "cmd-suggest-005", "label": "明日も会えるかな", "category": "提案" }
+  ]
+}
