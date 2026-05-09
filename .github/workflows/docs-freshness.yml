@@ -1,0 +1,19 @@
+# OPTIONAL: このワークフローが不要な場合はファイルごと削除してください
+name: Docs Freshness
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # 毎週月曜 3:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    uses: ./.github/workflows/shared/docs-freshness-check.yml
+    with:
+      days_threshold: 180
+      docs_path: docs
+    secrets: inherit

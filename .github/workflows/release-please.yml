@@ -1,0 +1,25 @@
+# OPTIONAL: このワークフローが不要な場合はファイルごと削除してください
+# OPTIONAL: release-please-config.json と release-please-manifest.json も併せて削除してください
+# 前提: Conventional Commits (feat:/fix:/chore: 等) を使用していること
+# 前提: GitHub Actions に Read and Write permissions が付与されていること
+#   (Settings > Actions > General > Workflow permissions)
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@a02a34c4d625f9be7cb89156071d8567266a2445  # v4.1.3
+        with:
+          config-file: .github/release-please-config.json
+          manifest-file: .github/release-please-manifest.json

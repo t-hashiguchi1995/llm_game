@@ -1,0 +1,74 @@
+name: "✨ 機能リクエスト"
+description: "新機能の追加・既存機能の改善提案"
+title: "feat: "
+labels: ["type: feature", "status: triage"]
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: "\U0001F3AF 要望の概要"
+      description: "どのような機能を追加・改善したいかを簡潔に説明してください。"
+      placeholder: "例: ダッシュボードにリアルタイム通知機能を追加したい"
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "\U0001F4A1 背景・動機"
+      description: "なぜこの機能が必要なのか、どのような課題を解決するのかを記載してください。"
+      placeholder: "例: 現状では手動でページをリロードしないと最新情報が反映されず、チームの生産性が低下している"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "\U0001F4DD 提案内容"
+      description: "具体的な実装案やイメージがあれば記載してください。"
+      placeholder: "例: WebSocket を使ったリアルタイム通知を実装し、画面右上にベルアイコンで表示する"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "\U0001F4CA 優先度"
+      description: "この機能の優先度を選択してください。"
+      options:
+        - Must（必須・ブロッカー）
+        - High（優先度高・早期対応が望ましい）
+        - Medium（通常対応）
+        - Low（余裕があれば対応）
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "\U0001F504 検討した代替案"
+      description: "他に検討した方法があれば記載してください。"
+      placeholder: "例: ポーリングによる定期更新も検討したが、リアルタイム性が不十分だった"
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "✅ 受け入れ条件"
+      description: "この機能が「完了」と言えるための条件を記載してください。"
+      placeholder: |
+        - [ ] 通知がリアルタイムで表示される
+        - [ ] 未読件数がバッジとして表示される
+        - [ ] 通知一覧から該当ページへ遷移できる
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "✔️ 送信前チェック"
+      options:
+        - label: 同様の機能リクエストが既に存在しないことを確認しました
+        - label: 既存機能では代替できないことを確認しました

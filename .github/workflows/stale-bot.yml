@@ -1,0 +1,40 @@
+# OPTIONAL: このワークフローが不要な場合はファイルごと削除してください
+name: Stale Issue/PR Bot
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 毎日 9:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639  # v9.1.0
+        with:
+          # Issue: 60日更新なし → stale ラベル → 14日後クローズ
+          days-before-issue-stale: 60
+          days-before-issue-close: 14
+          stale-issue-label: stale
+          stale-issue-message: |
+            このIssueは60日間更新がないため **stale** とマークしました。
+            14日以内にコメントや更新がない場合は自動クローズされます。
+            引き続き有効な場合は `pinned` ラベルを付与してください。
+          close-issue-message: '長期間更新がなかったためクローズしました。再開する場合は新しいIssueを作成してください。'
+          # PR: 30日更新なし → stale ラベル → 7日後クローズ
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          stale-pr-label: stale
+          stale-pr-message: |
+            このPRは30日間更新がないため **stale** とマークしました。
+            7日以内に更新がない場合は自動クローズされます。
+          close-pr-message: '長期間更新がなかったためクローズしました。'
+          # 除外ラベル
+          exempt-issue-labels: 'pinned,security'
+          exempt-pr-labels: 'pinned,security'
+          # 1回の実行で処理する最大数
+          operations-per-run: 30

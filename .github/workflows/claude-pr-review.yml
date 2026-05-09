@@ -1,0 +1,111 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  check-subscriber:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+      prompt-issues: ${{ steps.check.outputs.prompt-issues }}
+    steps:
+      - name: Check if PR author is subscribed
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          REPO: ${{ github.repository }}
+        run: |
+          ISSUES=$(gh api \
+            "/repos/${REPO}/issues?labels=ai-prompt&state=open" \
+            --jq '[.[] | {number: .number, title: .title, body: .body, assignees: [.assignees[].login]}]')
+
+          IS_SUBSCRIBED=$(echo "$ISSUES" | jq --arg author "$PR_AUTHOR" \
+            'any(.[]; .assignees | contains([$author]))')
+
+          if [ "$IS_SUBSCRIBED" = "true" ]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            FILTERED=$(echo "$ISSUES" | jq --arg author "$PR_AUTHOR" \
+              '[.[] | select(.assignees | contains([$author]))]')
+            {
+              echo "prompt-issues<<EOF"
+              echo "$FILTERED"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          else
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            echo "prompt-issues=[]" >> $GITHUB_OUTPUT
+          fi
+
+  generate-checklist:
+    needs: check-subscriber
+    if: needs.check-subscriber.outputs.should-run == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Build prompt from Issues
+        id: build-prompt
+        env:
+          PROMPT_ISSUES: ${{ needs.check-subscriber.outputs.prompt-issues }}
+        run: |
+          echo "$PROMPT_ISSUES" | jq -r '.[].body' > /tmp/combined-prompts.md
+
+      - name: Run Claude Code Action
+        id: claude
+        uses: anthropics/claude-code-action@28f83620103c48a57093dcc2837eec89e036bb9f  # beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: |
+            以下のチェックリスト生成ルールに従い、このPRに対するチェックリストをMarkdown形式で出力してください。
+            コメントの投稿は不要です。チェックリストのMarkdownテキストのみを出力してください。
+
+            ## チェックリスト生成ルール
+
+            $(cat /tmp/combined-prompts.md)
+
+            ## 判断理由の記録
+
+            各チェック項目について、なぜこのPRに必要と判断したかを
+            HTML コメント <!-- 理由: ... --> で記録してください。
+
+            ## 出力形式
+
+            ```markdown
+            ## AIレビューチェックリスト
+
+            - [ ] 項目1 <!-- 理由: このPRの○○の変更により必要 -->
+            - [ ] 項目2 <!-- 理由: △△が含まれているため -->
+            ```
+
+            このPRに関係ない項目は出力しないでください。
+          max_turns: 3
+
+      - name: Post checklist as PR comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          CLAUDE_OUTPUT: ${{ steps.claude.outputs.output }}
+        run: |
+          if [ -z "$CLAUDE_OUTPUT" ]; then
+            echo "Claude output is empty, skipping comment"
+            exit 0
+          fi
+          gh pr comment "$PR_NUMBER" \
+            --repo "$REPO" \
+            --body "$CLAUDE_OUTPUT"

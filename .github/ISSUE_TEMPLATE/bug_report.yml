@@ -1,0 +1,98 @@
+name: "\U0001F41B バグ報告"
+description: "バグ・不具合の報告"
+title: "fix: "
+labels: ["type: bug", "status: triage"]
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: "\U0001F50D バグの概要"
+      description: "バグの内容を簡潔に説明してください。"
+      placeholder: "例: ログインボタンをクリックしても画面遷移しない"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "\U0001F501 再現手順"
+      description: "バグを再現するための手順を記載してください。"
+      placeholder: |
+        1. '...' にアクセスする
+        2. '...' をクリックする
+        3. '...' までスクロールする
+        4. エラーが発生する
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "✅ 期待する動作"
+      description: "本来どのように動作するべきかを記載してください。"
+      placeholder: "例: ログインボタンをクリックするとダッシュボード画面に遷移する"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "❌ 実際の動作"
+      description: "実際にはどのように動作しているかを記載してください。"
+      placeholder: "例: ボタンをクリックしても何も起こらず、コンソールにエラーが表示される"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "\U0001F30D 環境情報"
+      description: "問題が発生した環境を記載してください。"
+      value: |
+        - OS:
+        - ブラウザ:
+        - バージョン:
+        - Node.js:
+        - Python:
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "⚠️ 深刻度"
+      description: "バグの深刻度を選択してください。"
+      options:
+        - Critical（サービス停止・データ損失）
+        - High（主要機能が使用不可）
+        - Medium（機能の一部に問題がある）
+        - Low（軽微な問題・表示崩れ等）
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: "\U0001F527 回避策"
+      description: "現時点で回避策があれば記載してください。"
+      placeholder: "例: ページをリロードすると正常に動作する"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "\U0001F4CB ログ・エラーメッセージ"
+      description: "関連するログやエラーメッセージがあれば貼り付けてください。"
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "✔️ 送信前チェック"
+      options:
+        - label: 同様のIssueが既に報告されていないことを確認しました
+        - label: 最新バージョンで問題が再現することを確認しました

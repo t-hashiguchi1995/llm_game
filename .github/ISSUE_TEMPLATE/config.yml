@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: "\U0001F4AC Slack で質問する"
+    url: https://your-workspace.slack.com
+    about: "緊急の質問や簡単な確認はこちら"
+  - name: "\U0001F4D6 ドキュメント"
+    url: https://your-docs-url.example.com
+    about: "まずはドキュメントをご確認ください"

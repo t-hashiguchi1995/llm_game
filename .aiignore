@@ -1,0 +1,16 @@
+*.log
+*.tmp
+.terraform/
+__pycache__/
+node_modules/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+docs/old/
+docs/scratch/
+.env
+.env.*
+!.env.template
+.op/
+.claude/audit.jsonl

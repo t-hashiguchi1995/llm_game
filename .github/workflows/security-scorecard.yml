@@ -1,0 +1,19 @@
+# OPTIONAL: このワークフローが不要な場合はファイルごと削除してください
+name: Security Scorecard
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # 毎週月曜 2:00 UTC
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  scorecard:
+    uses: ./.github/workflows/shared/ossf-scorecard.yml

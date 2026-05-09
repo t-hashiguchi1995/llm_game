@@ -1,0 +1,70 @@
+name: "❓ 質問"
+description: "技術的な疑問・仕様確認"
+title: "question: "
+labels: ["type: question", "status: triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > \U0001F4AC **Tip:** 緊急の質問や簡単な確認は、IssueよりもSlackやDiscussionsの方が素早く回答を得られる場合があります。
+
+  - type: textarea
+    id: question
+    attributes:
+      label: "❓ 質問内容"
+      description: "質問を具体的に記載してください。"
+      placeholder: "例: Terraform の state バケットを別リージョンに移行する手順はどうなりますか？"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "\U0001F5C2️ 背景・コンテキスト"
+      description: "質問に至った背景や状況を記載してください。"
+      placeholder: "例: DR 対策として東京リージョン以外にもバックアップを配置する検討をしている"
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: "\U0001F50D 試したこと・調べたこと"
+      description: "自分で調べたことや試したことを記載してください。"
+      placeholder: |
+        - 公式ドキュメントの「State Migration」セクションを確認した
+        - terraform state pull / push コマンドを試したがエラーが出た
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: "\U0001F3F7️ カテゴリ"
+      description: "質問のカテゴリを選択してください。"
+      options:
+        - 仕様・設計の確認
+        - 技術的な実装方法
+        - 環境・セットアップ
+        - テスト・品質
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "\U0001F4AD 予想・仮説"
+      description: "自分なりの予想や仮説があれば記載してください。"
+      placeholder: "例: terraform state mv で移行できると思うが、WIF の設定変更も必要かもしれない"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "✔️ 送信前チェック"
+      options:
+        - label: 関連するドキュメント・ADR を確認しました
+        - label: 同様の質問が既に存在しないことを確認しました

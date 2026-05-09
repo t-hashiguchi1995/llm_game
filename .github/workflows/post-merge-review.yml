@@ -1,0 +1,66 @@
+name: Post Merge Review
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  create-followup-issues:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+      contents: read
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 2
+
+      - name: Extract TODO/FIXME from merged diff
+        id: todos
+        run: |
+          git diff HEAD~1 HEAD \
+            -- '*.py' '*.ts' '*.tsx' '*.js' '*.tf' \
+            | grep '^+' \
+            | grep -vE '^\+\+\+' \
+            | grep -E '\b(TODO|FIXME|HACK|XXX)\b' \
+            | sed 's/^+//' \
+            | sed 's/^[[:space:]]*//' \
+            | grep -v '^$' \
+            | head -20 > /tmp/todos.txt || true
+
+          COUNT=$(wc -l < /tmp/todos.txt | tr -d ' ')
+          echo "count=${COUNT}" >> $GITHUB_OUTPUT
+          echo "Found ${COUNT} TODO/FIXME items"
+          cat /tmp/todos.txt
+
+      - name: Create issues from TODOs
+        if: steps.todos.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          CREATED=0
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+
+            # コメント記号を除去してクリーンなタイトルを作成
+            CLEAN=$(echo "$line" | sed 's|//[[:space:]]*||' | sed 's|#[[:space:]]*||' | head -c 80)
+
+            printf '## 概要\n\nPR #%s (%s) でマージされたコードに TODO/FIXME が含まれています。\n\n## 該当コード\n\n```\n%s\n```\n\n## 参照\n- PR: %s\n\n---\n*このIssueは post-merge-review ワークフローにより自動起票されました*\n' \
+              "${PR_NUMBER}" "${PR_TITLE}" "${line}" "${PR_URL}" > /tmp/body.txt
+
+            gh issue create \
+              --title "tech-debt: ${CLEAN}" \
+              --body-file /tmp/body.txt \
+              --label "technical-debt" || true
+
+            CREATED=$((CREATED + 1))
+          done < /tmp/todos.txt
+
+          echo "Created ${CREATED} issues"

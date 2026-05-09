@@ -1,0 +1,105 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ────────────────────────────────────────
+  # PR サイズ確認・ラベル付与
+  # ────────────────────────────────────────
+  pr-size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR サイズ確認・ラベル付与
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ADDITIONS: ${{ github.event.pull_request.additions }}
+          DELETIONS: ${{ github.event.pull_request.deletions }}
+          REPO: ${{ github.repository }}
+        run: |
+          TOTAL=$((ADDITIONS + DELETIONS))
+
+          if [ "$TOTAL" -gt 500 ]; then
+            SIZE_LABEL="size/XL"
+            SIZE_MSG="この PR は **${TOTAL} 行**の変更を含んでいます（XL）。レビューが困難になるため、分割を強く推奨します。"
+          elif [ "$TOTAL" -gt 300 ]; then
+            SIZE_LABEL="size/L"
+            SIZE_MSG="この PR は **${TOTAL} 行**の変更を含んでいます（L）。可能であれば分割を検討してください。"
+          elif [ "$TOTAL" -gt 100 ]; then
+            SIZE_LABEL="size/M"
+            SIZE_MSG=""
+          else
+            SIZE_LABEL="size/S"
+            SIZE_MSG=""
+          fi
+
+          # 既存の size ラベルを削除してから新しいラベルを付与
+          gh pr edit "$PR_NUMBER" --repo "$REPO" \
+            --remove-label "size/S" \
+            --remove-label "size/M" \
+            --remove-label "size/L" \
+            --remove-label "size/XL" 2>/dev/null || true
+          gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "$SIZE_LABEL" 2>/dev/null || true
+
+          if [ -n "$SIZE_MSG" ]; then
+            # 既存のサイズ警告コメントを削除して重複防止
+            EXISTING=$(gh api "/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+              --jq '.[] | select(.body | test("この PR は .* 行.*の変更")) | .id' 2>/dev/null || true)
+            if [ -n "$EXISTING" ]; then
+              gh api -X DELETE "/repos/${REPO}/issues/comments/${EXISTING}" 2>/dev/null || true
+            fi
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body "$SIZE_MSG"
+          fi
+
+  # ────────────────────────────────────────
+  # ADR リンク切れ + 変更時の ADR 確認
+  # ────────────────────────────────────────
+  adr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: ADR リンク切れ + 変更時の ADR 確認
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD 2>/dev/null || \
+                    git diff --name-only HEAD~1...HEAD)
+
+          # infra/ または backend/ に変更があるか
+          HAS_INFRA_OR_BACKEND=$(echo "$CHANGED" | grep -cE '^(infra|backend)/' || true)
+          HAS_ADR=$(echo "$CHANGED" | grep -cE '^docs/adr/' || true)
+
+          ISSUES=""
+
+          # ADR 追加なし警告
+          if [ "$HAS_INFRA_OR_BACKEND" -gt 0 ] && [ "$HAS_ADR" -eq 0 ]; then
+            ISSUES="${ISSUES}\n- \`infra/\` または \`backend/\` に変更がありますが \`docs/adr/\` への追加がありません。新しい技術的意思決定がある場合は ADR を作成してください。"
+          fi
+
+          # ADR 内のリンク切れチェック
+          if [ -d "docs/adr" ]; then
+            while IFS= read -r adr_file; do
+              while IFS= read -r ref; do
+                num=$(echo "$ref" | grep -oE '[0-9]+')
+                padded=$(printf '%03d' "$((10#$num))")
+                if ! ls "docs/adr/ADR-${padded}-"*.md 2>/dev/null | grep -q .; then
+                  ISSUES="${ISSUES}\n- \`${adr_file}\` 内の \`${ref}\` 参照先が存在しません"
+                fi
+              done < <(grep -oE 'ADR-[0-9]+' "$adr_file" 2>/dev/null || true)
+            done < <(find docs/adr -name "*.md" 2>/dev/null)
+          fi
+
+          if [ -n "$ISSUES" ]; then
+            BODY="## ADR チェック結果\n$(printf '%b' "$ISSUES")"
+            gh pr comment "$PR_NUMBER" --body "$(printf '%b' "$BODY")"
+          fi

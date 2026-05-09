@@ -1,0 +1,97 @@
+name: "\U0001F4CB タスク"
+description: "開発タスク・作業チケットの起票"
+title: "chore: "
+labels: ["type: task", "status: triage"]
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: "\U0001F4CC タスクの概要"
+      description: "このタスクの内容を簡潔に説明してください。"
+      placeholder: "例: lefthook の pre-commit に重複コード検出を追加する"
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: "\U0001F5C2️ 背景・目的"
+      description: "なぜこのタスクが必要なのかを記載してください。"
+      placeholder: "例: AI エージェントが既存コードと重複するコードを生成する問題を防止するため"
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: "\U0001F3AF スコープ"
+      description: "対応する範囲と対応しない範囲を明確にしてください。"
+      placeholder: |
+        **対応する:**
+        - jscpd を devDependencies に追加
+        - lefthook.yml に duplicate-check コマンドを追加
+
+        **対応しない:**
+        - 既存の重複コードの修正
+        - テストコードの重複チェック
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "✅ 完了条件"
+      description: "このタスクが完了したと言える条件をチェックリスト形式で記載してください。"
+      placeholder: |
+        - [ ] npm install が通る
+        - [ ] lefthook run pre-commit が正常終了する
+        - [ ] ADR が作成されている
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: "\U0001F516 タスク種別"
+      description: "タスクの種別を選択してください。"
+      options:
+        - 機能開発
+        - リファクタリング
+        - 依存関係の更新
+        - テスト追加・改善
+        - ドキュメント整備
+        - CI/CD 改善
+        - 調査・スパイク
+        - その他
+    validations:
+      required: true
+
+  - type: input
+    id: estimate
+    attributes:
+      label: "⏱️ 見積もり"
+      description: "作業時間の見積もりがあれば記載してください。"
+      placeholder: "例: 2h, 1d, 3d"
+    validations:
+      required: false
+
+  - type: input
+    id: due
+    attributes:
+      label: "\U0001F4C5 期日"
+      description: "期日がある場合は記載してください。"
+      placeholder: "例: 2026-04-15"
+    validations:
+      required: false
+
+  - type: textarea
+    id: related
+    attributes:
+      label: "\U0001F517 関連Issue / PR"
+      description: "関連するIssueやPRがあればリンクしてください。"
+      placeholder: |
+        - #123
+        - #456
+    validations:
+      required: false

@@ -1,0 +1,81 @@
+# OPTIONAL: このワークフローが不要な場合は docs-freshness.yml ごと削除してください
+name: Docs Freshness Check (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      days_threshold:
+        description: '何日以上更新なしを古いとみなすか'
+        required: false
+        type: number
+        default: 180
+      docs_path:
+        description: 'チェック対象ディレクトリ'
+        required: false
+        type: string
+        default: 'docs'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  freshness-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: 古いドキュメントを検出して Issue 作成
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DAYS_THRESHOLD: ${{ inputs.days_threshold }}
+          DOCS_PATH: ${{ inputs.docs_path }}
+          REPO: ${{ github.repository }}
+        run: |
+          THRESHOLD_SECS=$((DAYS_THRESHOLD * 86400))
+          NOW=$(date +%s)
+          STALE_FILES=""
+
+          while IFS= read -r file; do
+            LAST_COMMIT=$(git log -1 --format="%ct" -- "$file" 2>/dev/null || echo "0")
+            AGE=$((NOW - LAST_COMMIT))
+            if [ "$AGE" -gt "$THRESHOLD_SECS" ]; then
+              DAYS=$((AGE / 86400))
+              # Use real newlines and explicit format to avoid printf %b interpretation
+              STALE_FILES="${STALE_FILES}
+          - \`${file}\` (最終更新: ${DAYS}日前)"
+            fi
+          done < <(find "$DOCS_PATH" -name "*.md" -type f 2>/dev/null)
+
+          if [ -z "$STALE_FILES" ]; then
+            echo "古いドキュメントはありません"
+            exit 0
+          fi
+
+          TITLE="docs: ${DAYS_THRESHOLD}日以上更新されていないドキュメントがあります"
+
+          # Duplicate check — use partial title with quoted search to avoid word-splitting
+          EXISTING=$(gh issue list --repo "$REPO" --state open \
+            --search "\"${DAYS_THRESHOLD}日以上更新されていないドキュメントがあります\" in:title" \
+            --json number --jq '.[0].number' 2>/dev/null || echo "")
+
+          if [ -n "$EXISTING" ]; then
+            echo "既存の Issue #${EXISTING} があるためスキップします"
+            exit 0
+          fi
+
+          BODY="## ドキュメント鮮度レポート
+
+          以下のファイルが **${DAYS_THRESHOLD}日以上** 更新されていません。内容を確認し、必要に応じて更新または廃止マークを付けてください。
+          ${STALE_FILES}
+
+          ---
+          *このIssueは docs-freshness ワークフローにより自動作成されました。*"
+
+          gh issue create \
+            --repo "$REPO" \
+            --title "$TITLE" \
+            --body "$BODY" \
+            --label "documentation"
