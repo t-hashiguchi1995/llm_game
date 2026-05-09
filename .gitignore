@@ -25,8 +25,7 @@ frontend/.vite/
 # Audio / media assets (not tracked in git)
 cutin_segments/
 
-# Game assets (managed separately)
-frontend/public/images/
+# Game assets - tracked in git (sprites resized to 1024px, backgrounds as-is)
 
 # Root-level memory directory (auto-memory lives in ~/.claude/)
 /memory
