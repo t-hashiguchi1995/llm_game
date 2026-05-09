@@ -16,7 +16,7 @@ export function CharacterSprite({ character, emotion }: Props) {
 				key={path}
 				src={`${base}${path}`}
 				alt={character.name}
-				className="h-full w-auto object-contain drop-shadow-2xl select-none"
+				className="max-h-[85%] w-auto object-contain drop-shadow-2xl select-none"
 				style={{ animation: "sprite-in 0.35s ease-out both" }}
 				draggable={false}
 			/>

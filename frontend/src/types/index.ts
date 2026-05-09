@@ -90,6 +90,9 @@ export interface SaveSlot {
 	currentDialog: CurrentDialog | null;
 }
 
+export type DisplayMode = "auto" | "pc" | "mobile";
+export type TextSpeed = "slow" | "normal" | "fast";
+
 export interface GameState {
 	params: GameParameters;
 	currentScene: string;
@@ -100,4 +103,8 @@ export interface GameState {
 	endingId: string | null;
 	currentDialog: CurrentDialog | null;
 	cooldownUntil: number;
+	displayMode: DisplayMode;
+	textSpeed: TextSpeed;
+	bgmVolume: number;
+	seVolume: number;
 }
