@@ -183,40 +183,41 @@ function MobileCategoryButton({
 
 			{open && !disabled && (
 				<div
-					className="fixed inset-0 z-20 flex items-center justify-center px-6"
+					className="fixed inset-0 z-20 flex items-center justify-center px-5"
 					onClick={() => setOpen(false)}
 				>
-					<div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+					<div className="absolute inset-0 bg-black/80" />
 					<div
-						className="relative z-10 w-full max-w-xs flex flex-col gap-2.5"
+						className="relative z-10 w-full max-w-xs rounded-xl border border-purple-500/25 overflow-hidden shadow-2xl"
 						onClick={(e) => e.stopPropagation()}
 					>
-						<p
-							className={`text-center text-[11px] font-semibold tracking-[0.2em] mb-1 ${colors.label}`}
+						<div
+							className={`bg-[#0d0d1a] px-4 pt-4 pb-2 text-center text-[11px] font-semibold tracking-[0.2em] border-b border-purple-500/15 ${colors.label}`}
 						>
 							◆ {category} ◆
-						</p>
-						{commands.map((cmd, i) => (
-							<button
-								key={cmd.id}
-								onClick={() => {
-									onSelect(cmd.id);
-									setOpen(false);
-								}}
-								style={{
-									animationDelay: `${i * 60}ms`,
-									animation: "choice-in 0.25s ease-out both",
-								}}
-								className={`
-                  w-full rounded px-4 py-3.5 text-sm text-white text-center border
-                  bg-black/60 backdrop-blur-sm
-                  ${colors.border} ${colors.hover} ${colors.glow}
-                  transition-all duration-150 active:scale-95
-                `}
-							>
-								{cmd.label}
-							</button>
-						))}
+						</div>
+						<div className="bg-[#0d0d1a] px-3 py-3 flex flex-col gap-2">
+							{commands.map((cmd, i) => (
+								<button
+									key={cmd.id}
+									onClick={() => {
+										onSelect(cmd.id);
+										setOpen(false);
+									}}
+									style={{
+										animationDelay: `${i * 60}ms`,
+										animation: "choice-in 0.25s ease-out both",
+									}}
+									className={`
+                    w-full rounded px-4 py-3 text-sm text-white text-center border
+                    ${colors.bg} ${colors.border} ${colors.hover} ${colors.glow}
+                    transition-all duration-150 active:scale-95
+                  `}
+								>
+									{cmd.label}
+								</button>
+							))}
+						</div>
 					</div>
 				</div>
 			)}

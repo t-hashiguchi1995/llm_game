@@ -31,9 +31,7 @@ export function SceneView() {
 			<div className="absolute inset-0 bg-black/20" />
 
 			{/* 立ち絵 */}
-			<div className="absolute inset-0 bottom-[22%]">
-				<CharacterSprite character={character} emotion={emotion} />
-			</div>
+			<CharacterSprite character={character} emotion={emotion} />
 
 			{/* ダイアログ */}
 			<DialogBox speaker={speaker} text={text} />
