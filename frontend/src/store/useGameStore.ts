@@ -4,6 +4,8 @@ import type {
 	GameParameters,
 	CurrentDialog,
 	SaveSlot,
+	DisplayMode,
+	TextSpeed,
 } from "../types";
 import scenariosData from "../data/scenarios.json";
 import endingsData from "../data/endings.json";
@@ -39,6 +41,10 @@ const INITIAL_STATE: Omit<GameState, "saveSlots"> = {
 	endingId: null,
 	currentDialog: INITIAL_DIALOG,
 	cooldownUntil: 0,
+	displayMode: "auto",
+	textSpeed: "normal",
+	bgmVolume: 80,
+	seVolume: 80,
 };
 
 interface GameStore extends GameState {
@@ -48,6 +54,10 @@ interface GameStore extends GameState {
 	loadGame: (slot: number) => boolean;
 	resetGame: () => void;
 	isCoolingDown: () => boolean;
+	setDisplayMode: (mode: DisplayMode) => void;
+	setTextSpeed: (speed: TextSpeed) => void;
+	setBgmVolume: (vol: number) => void;
+	setSeVolume: (vol: number) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -150,4 +160,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	},
 
 	resetGame: () => set({ ...INITIAL_STATE, saveSlots: get().saveSlots }),
+
+	setDisplayMode: (mode) => set({ displayMode: mode }),
+	setTextSpeed: (speed) => set({ textSpeed: speed }),
+	setBgmVolume: (vol) => set({ bgmVolume: Math.min(100, Math.max(0, vol)) }),
+	setSeVolume: (vol) => set({ seVolume: Math.min(100, Math.max(0, vol)) }),
 }));
