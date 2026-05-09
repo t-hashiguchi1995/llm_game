@@ -1,0 +1,49 @@
+pre-commit:
+  parallel: true
+  commands:
+    secrets:
+      run: gitleaks protect --staged --redact
+
+    tf-fmt:
+      glob: "infra/**/*.tf"
+      run: terraform fmt -check {staged_files}
+
+    tf-lint:
+      glob: "infra/**/*.tf"
+      run: tflint --recursive
+
+    checkov:
+      glob: "infra/**/*.tf"
+      run: checkov -d infra/ --check CKV_GCP_62,CKV_GCP_6,CKV_GCP_29,CKV_GCP_49 --compact --quiet
+
+    dockerfile-lint:
+      glob: "**/Dockerfile"
+      run: hadolint {staged_files}
+
+    bandit:
+      glob: "backend/**/*.py"
+      run: cd backend && uv run bandit -r src -c pyproject.toml
+
+    mypy:
+      glob: "backend/**/*.py"
+      root: "backend"
+      run: uv run mypy {staged_files}
+
+    tsc-check:
+      glob: "frontend/**/*.{ts,tsx}"
+      run: cd frontend && npx tsc --noEmit
+
+    eslint-check:
+      glob: "frontend/**/*.{ts,tsx}"
+      run: cd frontend && npx eslint {staged_files}
+
+    duplicate-check:
+      glob: "**/*.{py,ts,tsx,js,jsx}"
+      run: >-
+        npx jscpd
+        --min-lines 15
+        --min-tokens 70
+        --ignore "**/node_modules/**,**/__pycache__/**,**/*.test.*,**/*.spec.*,**/tests/**"
+        --reporters console
+        --exitCode 1
+        backend/src frontend/src
