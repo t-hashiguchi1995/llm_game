@@ -46,6 +46,7 @@ export function CommandPanel() {
 	const applyCommand = useGameStore((s) => s.applyCommand);
 	const cooldownUntil = useGameStore((s) => s.cooldownUntil);
 	const isEnded = useGameStore((s) => s.isEnded);
+	const displayMode = useGameStore((s) => s.displayMode);
 	const dialogKey = useGameStore(
 		(s) => s.currentDialog?.text.slice(0, 8) ?? "",
 	);
@@ -61,6 +62,9 @@ export function CommandPanel() {
 	const cooldownProgress = remaining > 0 ? (remaining / 3000) * 100 : 0;
 	const isCooling = remaining > 0;
 
+	const forcePC = displayMode === "pc";
+	const forceMobile = displayMode === "mobile";
+
 	return (
 		<div className="bg-black/98 border-t border-purple-500/15 px-3 py-2 md:px-4 md:py-3">
 			{/* クールダウンバー */}
@@ -72,7 +76,15 @@ export function CommandPanel() {
 			</div>
 
 			{/* デスクトップ: 4列グリッド */}
-			<div className="hidden md:grid md:grid-cols-4 gap-3">
+			<div
+				className={
+					forcePC
+						? "grid grid-cols-4 gap-3"
+						: forceMobile
+							? "hidden"
+							: "hidden md:grid md:grid-cols-4 gap-3"
+				}
+			>
 				{CATEGORIES.map((cat) => (
 					<CommandGroup
 						key={cat}
@@ -86,7 +98,15 @@ export function CommandPanel() {
 			</div>
 
 			{/* モバイル: 2×2グリッド（カテゴリボタン） */}
-			<div className="md:hidden grid grid-cols-2 gap-2">
+			<div
+				className={
+					forceMobile
+						? "grid grid-cols-2 gap-2"
+						: forcePC
+							? "hidden"
+							: "md:hidden grid grid-cols-2 gap-2"
+				}
+			>
 				{CATEGORIES.map((cat) => (
 					<MobileCategoryButton
 						key={cat}
