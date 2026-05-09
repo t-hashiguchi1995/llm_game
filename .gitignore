@@ -1,0 +1,36 @@
+.env
+.env.keys
+.claude/sessions/latest-summary.md
+PR_DESCRIPTION.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+.coverage
+coverage.xml
+
+# Node.js
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Audio / media assets (not tracked in git)
+cutin_segments/
+
+# Game assets (managed separately)
+frontend/public/images/
+
+# Root-level memory directory (auto-memory lives in ~/.claude/)
+/memory
+
+# Generated workflow artifacts (keep only active workflow YAMLs)
+.github/workflows/*.md
+.github/workflows/*.lock.yml
