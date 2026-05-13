@@ -4,12 +4,17 @@ import {
 	resolveEvent,
 	checkEnding,
 	resolveSpritePath,
+	resolveEventById,
+	resolveEventChain,
+	resolveAutoEvents,
+	checkSceneProgression,
 } from "./scenarioEngine";
 import type {
 	GameParameters,
 	ScenarioEvent,
 	Ending,
 	Character,
+	Scene,
 } from "../types";
 
 const baseParams: GameParameters = { sweetness: 50, curiosity: 0, trust: 50 };
@@ -165,5 +170,231 @@ describe("resolveSpritePath", () => {
 
 	it("未知の感情は default にフォールバックする", () => {
 		expect(resolveSpritePath(character, "unknown")).toBe("images/normal1.png");
+	});
+});
+
+const chainEvents: ScenarioEvent[] = [
+	{
+		id: "evt-a",
+		trigger: { type: "command", command_id: "cmd-a" },
+		condition: {},
+		scene_context: "",
+		emotion: "normal_1",
+		background: "bg.jpg",
+		fallback_text: "A",
+		parameter_delta: { sweetness: 0, curiosity: 0, trust: 0 },
+		set_flags: [],
+		next_event: "evt-b",
+	},
+	{
+		id: "evt-b",
+		trigger: { type: "chain" },
+		condition: {},
+		scene_context: "",
+		emotion: "happy_1",
+		background: "bg.jpg",
+		fallback_text: "B",
+		parameter_delta: { sweetness: 2, curiosity: 0, trust: 1 },
+		set_flags: [],
+		next_event: null,
+	},
+];
+
+describe("resolveEventById", () => {
+	it("IDでイベントを直接取得する", () => {
+		expect(resolveEventById("evt-b", chainEvents)?.id).toBe("evt-b");
+	});
+
+	it("存在しないIDはnullを返す", () => {
+		expect(resolveEventById("evt-unknown", chainEvents)).toBeNull();
+	});
+});
+
+describe("resolveEventChain", () => {
+	it("primary と chain イベントの配列を返す", () => {
+		const result = resolveEventChain("cmd-a", baseParams, [], chainEvents);
+		expect(result.map((e) => e.id)).toEqual(["evt-a", "evt-b"]);
+	});
+
+	it("next_event が null の場合は primary のみ返す", () => {
+		const solo: ScenarioEvent[] = [
+			{ ...chainEvents[0], id: "evt-solo", trigger: { type: "command", command_id: "cmd-solo" }, next_event: null },
+		];
+		const result = resolveEventChain("cmd-solo", baseParams, [], solo);
+		expect(result).toHaveLength(1);
+		expect(result[0].id).toBe("evt-solo");
+	});
+
+	it("コマンドに合致するイベントがない場合は空配列を返す", () => {
+		expect(resolveEventChain("cmd-missing", baseParams, [], chainEvents)).toHaveLength(0);
+	});
+
+	it("next_event 連鎖は最大5件で打ち切る", () => {
+		const long: ScenarioEvent[] = Array.from({ length: 8 }, (_, i) => ({
+			id: `evt-${i}`,
+			trigger: i === 0
+				? ({ type: "command" as const, command_id: "cmd-long" })
+				: ({ type: "chain" as const }),
+			condition: {},
+			scene_context: "",
+			emotion: "normal_1",
+			background: "bg.jpg",
+			fallback_text: `text ${i}`,
+			parameter_delta: { sweetness: 0, curiosity: 0, trust: 0 },
+			set_flags: [],
+			next_event: i < 7 ? `evt-${i + 1}` : null,
+		}));
+		const result = resolveEventChain("cmd-long", baseParams, [], long);
+		expect(result.length).toBeLessThanOrEqual(6);
+	});
+});
+
+const autoTestEvents: ScenarioEvent[] = [
+	{
+		id: "evt-auto-param",
+		trigger: { type: "parameter" },
+		condition: { trust: { min: 70 } },
+		scene_context: "",
+		emotion: "happy_1",
+		background: "bg.jpg",
+		fallback_text: "high trust",
+		parameter_delta: { sweetness: 2, curiosity: 0, trust: 0 },
+		set_flags: ["_auto_fired_evt-auto-param"],
+		next_event: null,
+	},
+	{
+		id: "evt-auto-flag",
+		trigger: { type: "flag", flag_id: "some_flag" },
+		condition: {},
+		scene_context: "",
+		emotion: "normal_1",
+		background: "bg.jpg",
+		fallback_text: "flag triggered",
+		parameter_delta: { sweetness: 0, curiosity: 0, trust: 5 },
+		set_flags: ["_auto_fired_evt-auto-flag"],
+		next_event: null,
+	},
+	{
+		id: "evt-cmd",
+		trigger: { type: "command", command_id: "cmd-x" },
+		condition: {},
+		scene_context: "",
+		emotion: "normal_1",
+		background: "bg.jpg",
+		fallback_text: "cmd",
+		parameter_delta: { sweetness: 0, curiosity: 0, trust: 0 },
+		set_flags: [],
+		next_event: null,
+	},
+];
+
+describe("resolveAutoEvents", () => {
+	it("trust >= 70 の parameter イベントを返す", () => {
+		const result = resolveAutoEvents(
+			{ sweetness: 50, curiosity: 0, trust: 75 },
+			[],
+			autoTestEvents,
+		);
+		expect(result.map((e) => e.id)).toContain("evt-auto-param");
+	});
+
+	it("trust < 70 の parameter イベントはスキップ", () => {
+		const result = resolveAutoEvents(
+			{ sweetness: 50, curiosity: 0, trust: 60 },
+			[],
+			autoTestEvents,
+		);
+		expect(result.map((e) => e.id)).not.toContain("evt-auto-param");
+	});
+
+	it("既発火フラグ付き parameter イベントはスキップ", () => {
+		const result = resolveAutoEvents(
+			{ sweetness: 50, curiosity: 0, trust: 80 },
+			["_auto_fired_evt-auto-param"],
+			autoTestEvents,
+		);
+		expect(result.map((e) => e.id)).not.toContain("evt-auto-param");
+	});
+
+	it("flag_id が flags に含まれる flag イベントを返す", () => {
+		const result = resolveAutoEvents(baseParams, ["some_flag"], autoTestEvents);
+		expect(result.map((e) => e.id)).toContain("evt-auto-flag");
+	});
+
+	it("フラグがない場合は flag イベントをスキップ", () => {
+		const result = resolveAutoEvents(baseParams, [], autoTestEvents);
+		expect(result.map((e) => e.id)).not.toContain("evt-auto-flag");
+	});
+
+	it("既発火フラグ付き flag イベントはスキップ", () => {
+		const result = resolveAutoEvents(
+			baseParams,
+			["some_flag", "_auto_fired_evt-auto-flag"],
+			autoTestEvents,
+		);
+		expect(result.map((e) => e.id)).not.toContain("evt-auto-flag");
+	});
+
+	it("command タイプのイベントは返さない", () => {
+		const result = resolveAutoEvents(
+			{ sweetness: 50, curiosity: 0, trust: 80 },
+			["some_flag"],
+			autoTestEvents,
+		);
+		expect(result.map((e) => e.id)).not.toContain("evt-cmd");
+	});
+});
+
+const testScenes: Scene[] = [
+	{ id: "scene-001", label: "Scene 1", unlock_condition: {} },
+	{
+		id: "scene-002",
+		label: "Scene 2",
+		unlock_condition: { flags: ["flag_a"], sweetness: { min: 60 } },
+	},
+	{
+		id: "scene-003",
+		label: "Scene 3",
+		unlock_condition: { sweetness: { min: 80 } },
+	},
+];
+
+describe("checkSceneProgression", () => {
+	it("条件を満たす次のシーンIDを返す", () => {
+		const result = checkSceneProgression(
+			"scene-001",
+			["flag_a"],
+			{ sweetness: 65, curiosity: 0, trust: 50 },
+			testScenes,
+		);
+		expect(result).toBe("scene-002");
+	});
+
+	it("条件未充足ではnullを返す", () => {
+		expect(
+			checkSceneProgression("scene-001", [], baseParams, testScenes),
+		).toBeNull();
+	});
+
+	it("現在のシーンは対象外（現在より後のみチェック）", () => {
+		const result = checkSceneProgression(
+			"scene-002",
+			["flag_a"],
+			{ sweetness: 65, curiosity: 0, trust: 50 },
+			testScenes,
+		);
+		expect(result).toBeNull();
+	});
+
+	it("存在しないシーンIDの場合はnullを返す", () => {
+		expect(
+			checkSceneProgression("scene-999", [], baseParams, testScenes),
+		).toBeNull();
+	});
+
+	it("scenes が空配列の場合はnullを返す", () => {
+		expect(
+			checkSceneProgression("scene-001", [], baseParams, []),
+		).toBeNull();
 	});
 });
