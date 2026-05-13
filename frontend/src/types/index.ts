@@ -17,8 +17,9 @@ export interface EventCondition {
 }
 
 export interface EventTrigger {
-	type: "command" | "parameter" | "flag";
+	type: "command" | "parameter" | "flag" | "chain";
 	command_id?: string;
+	flag_id?: string;
 }
 
 export interface ParameterDelta {
@@ -107,4 +108,20 @@ export interface GameState {
 	textSpeed: TextSpeed;
 	bgmVolume: number;
 	seVolume: number;
+}
+
+export interface QueuedEvent {
+	event: ScenarioEvent;
+	delay: number;
+}
+
+export interface Scene {
+	id: string;
+	label: string;
+	unlock_condition: {
+		flags?: string[];
+		sweetness?: ParameterCondition;
+		curiosity?: ParameterCondition;
+		trust?: ParameterCondition;
+	};
 }
