@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useGameStore } from "../store/useGameStore";
 import commandsData from "../data/commands.json";
 import type { Command } from "../types";
+import { COOLDOWN_MS } from "../constants";
 
 const CATEGORIES = ["会話", "スキンシップ", "サポート", "提案"] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -63,7 +64,7 @@ export function CommandPanel({ onCommand, isProcessing }: Props) {
 	}, [cooldownUntil]);
 
 	const remaining = Math.max(0, cooldownUntil - now);
-	const cooldownProgress = remaining > 0 ? (remaining / 3000) * 100 : 0;
+	const cooldownProgress = remaining > 0 ? (remaining / COOLDOWN_MS) * 100 : 0;
 	const isCooling = remaining > 0 || isProcessing;
 
 	const forcePC = displayMode === "pc";

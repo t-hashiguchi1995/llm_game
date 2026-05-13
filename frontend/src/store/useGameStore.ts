@@ -13,13 +13,12 @@ import scenariosData from "../data/scenarios.json";
 import endingsData from "../data/endings.json";
 import charactersData from "../data/characters.json";
 import {
-	resolveEvent,
 	checkEnding,
 	clampParam,
 	checkSceneProgression,
 } from "../engine/scenarioEngine";
+import { COOLDOWN_MS } from "../constants";
 
-const COOLDOWN_MS = 3000;
 const SAVE_KEY = (slot: number) => `mssp_save_slot_${slot}`;
 
 const INITIAL_PARAMS: GameParameters = {
@@ -51,7 +50,6 @@ const INITIAL_STATE: Omit<GameState, "saveSlots"> = {
 };
 
 interface GameStore extends GameState {
-	applyCommand: (commandId: string) => void;
 	applyEvent: (event: ScenarioEvent) => void;
 	setCooldownUntil: (until: number) => void;
 	importSaves: (slots: SaveSlot[]) => void;
@@ -77,33 +75,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		}
 	}).filter((s): s is SaveSlot => s !== null),
 
-	applyCommand: (commandId) => {
-		const state = get();
-		if (state.isEnded || state.isCoolingDown()) return;
-
-		const event = resolveEvent(
-			commandId,
-			state.params,
-			state.flags,
-			scenariosData.events as Parameters<typeof resolveEvent>[3],
-		);
-		if (!event) return;
-
-		get().applyEvent(event);
-		set({ cooldownUntil: Date.now() + COOLDOWN_MS });
-		get().checkAndApplyEnding();
-	},
-
 	applyEvent: (event) => {
 		const state = get();
 		const character = charactersData.characters[0];
 
 		const newParams: GameParameters = {
-			sweetness: clampParam(state.params.sweetness + event.parameter_delta.sweetness),
-			curiosity: clampParam(state.params.curiosity + event.parameter_delta.curiosity),
+			sweetness: clampParam(
+				state.params.sweetness + event.parameter_delta.sweetness,
+			),
+			curiosity: clampParam(
+				state.params.curiosity + event.parameter_delta.curiosity,
+			),
 			trust: clampParam(state.params.trust + event.parameter_delta.trust),
 		};
-		const newFlags = [...new Set([...state.flags, ...event.set_flags])];
+		const baseFlags = [...new Set([...state.flags, ...event.set_flags])];
+		const newFlags =
+			event.trigger.type === "parameter" || event.trigger.type === "flag"
+				? [...new Set([...baseFlags, `_auto_fired_${event.id}`])]
+				: baseFlags;
 		const dialog: CurrentDialog = {
 			text: event.fallback_text,
 			speaker: character.name,
