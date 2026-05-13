@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useGameStore } from "../store/useGameStore";
+import type { SaveSlot } from "../types";
 
 const SLOT_COUNT = 6;
 
@@ -32,7 +33,7 @@ export function SaveLoadModal({ onClose }: Props) {
 	}
 
 	function handleExport() {
-		const slots = useGameStore.getState().saveSlots;
+		const slots = saveSlots;
 		const json = JSON.stringify(slots, null, 2);
 		const blob = new Blob([json], { type: "application/json" });
 		const url = URL.createObjectURL(blob);
@@ -40,7 +41,7 @@ export function SaveLoadModal({ onClose }: Props) {
 		a.href = url;
 		a.download = `mssp_saves_${new Date().toISOString().slice(0, 10)}.json`;
 		a.click();
-		URL.revokeObjectURL(url);
+		setTimeout(() => URL.revokeObjectURL(url), 100);
 	}
 
 	function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -51,15 +52,24 @@ export function SaveLoadModal({ onClose }: Props) {
 			try {
 				const slots = JSON.parse(ev.target?.result as string);
 				if (!Array.isArray(slots)) throw new Error("invalid format");
+				const isValidSlot = (s: unknown): s is SaveSlot =>
+					typeof s === "object" &&
+					s !== null &&
+					typeof (s as SaveSlot).slot === "number" &&
+					typeof (s as SaveSlot).timestamp === "string" &&
+					typeof (s as SaveSlot).currentScene === "string";
+				if (!slots.every(isValidSlot)) throw new Error("invalid slot shape");
 				importSaves(slots);
 				alert("インポートしました");
 				onClose();
+				e.target.value = "";
 			} catch {
 				alert("ファイルの形式が正しくありません");
+				e.target.value = "";
 			}
 		};
+		reader.onerror = () => alert("ファイルの読み込みに失敗しました");
 		reader.readAsText(file);
-		e.target.value = "";
 	}
 
 	return (
