@@ -16,11 +16,11 @@ export interface EventCondition {
 	flags?: string[];
 }
 
-export interface EventTrigger {
-	type: "command" | "parameter" | "flag" | "chain";
-	command_id?: string;
-	flag_id?: string;
-}
+export type EventTrigger =
+	| { type: "command"; command_id: string }
+	| { type: "flag"; flag_id: string }
+	| { type: "parameter" }
+	| { type: "chain" };
 
 export interface ParameterDelta {
 	sweetness: number;
@@ -118,10 +118,5 @@ export interface QueuedEvent {
 export interface Scene {
 	id: string;
 	label: string;
-	unlock_condition: {
-		flags?: string[];
-		sweetness?: ParameterCondition;
-		curiosity?: ParameterCondition;
-		trust?: ParameterCondition;
-	};
+	unlock_condition: EventCondition;
 }
