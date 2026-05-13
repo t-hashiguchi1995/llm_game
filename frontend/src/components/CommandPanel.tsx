@@ -55,7 +55,7 @@ export function CommandPanel({ onCommand, isProcessing }: Props) {
 	const dialogKey = useGameStore(
 		(s) => s.currentDialog?.text.slice(0, 8) ?? "",
 	);
-	const [now, setNow] = useState(Date.now());
+	const [now, setNow] = useState(0);
 
 	useEffect(() => {
 		if (cooldownUntil <= Date.now()) return;
@@ -63,7 +63,7 @@ export function CommandPanel({ onCommand, isProcessing }: Props) {
 		return () => clearInterval(interval);
 	}, [cooldownUntil]);
 
-	const remaining = Math.max(0, cooldownUntil - now);
+	const remaining = now > 0 ? Math.max(0, cooldownUntil - now) : 0;
 	const cooldownProgress = remaining > 0 ? (remaining / COOLDOWN_MS) * 100 : 0;
 	const isCooling = remaining > 0 || isProcessing;
 

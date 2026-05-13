@@ -10,6 +10,7 @@ export function DialogBox({ speaker, text }: Props) {
 	const [done, setDone] = useState(true);
 
 	useEffect(() => {
+		/* eslint-disable react-hooks/set-state-in-effect */
 		setDisplayed("");
 		setDone(false);
 		let i = 0;
@@ -21,6 +22,7 @@ export function DialogBox({ speaker, text }: Props) {
 				setDone(true);
 			}
 		}, 40);
+		/* eslint-enable react-hooks/set-state-in-effect */
 		return () => clearInterval(id);
 	}, [text]);
 

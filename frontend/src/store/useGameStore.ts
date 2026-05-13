@@ -17,8 +17,6 @@ import {
 	clampParam,
 	checkSceneProgression,
 } from "../engine/scenarioEngine";
-import { COOLDOWN_MS } from "../constants";
-
 const SAVE_KEY = (slot: number) => `mssp_save_slot_${slot}`;
 
 const INITIAL_PARAMS: GameParameters = {
