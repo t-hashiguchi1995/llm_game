@@ -6,6 +6,8 @@ import type {
 	SaveSlot,
 	DisplayMode,
 	TextSpeed,
+	ScenarioEvent,
+	Scene,
 } from "../types";
 import scenariosData from "../data/scenarios.json";
 import endingsData from "../data/endings.json";
@@ -14,6 +16,7 @@ import {
 	resolveEvent,
 	checkEnding,
 	clampParam,
+	checkSceneProgression,
 } from "../engine/scenarioEngine";
 
 const COOLDOWN_MS = 3000;
@@ -49,6 +52,9 @@ const INITIAL_STATE: Omit<GameState, "saveSlots"> = {
 
 interface GameStore extends GameState {
 	applyCommand: (commandId: string) => void;
+	applyEvent: (event: ScenarioEvent) => void;
+	setCooldownUntil: (until: number) => void;
+	importSaves: (slots: SaveSlot[]) => void;
 	checkAndApplyEnding: () => void;
 	saveGame: (slot: number) => void;
 	loadGame: (slot: number) => boolean;
@@ -62,34 +68,42 @@ interface GameStore extends GameState {
 
 export const useGameStore = create<GameStore>((set, get) => ({
 	...INITIAL_STATE,
-	saveSlots: [],
+	saveSlots: Array.from({ length: 6 }, (_, i) => {
+		const raw = localStorage.getItem(SAVE_KEY(i));
+		try {
+			return raw ? (JSON.parse(raw) as SaveSlot) : null;
+		} catch {
+			return null;
+		}
+	}).filter((s): s is SaveSlot => s !== null),
 
 	applyCommand: (commandId) => {
 		const state = get();
 		if (state.isEnded || state.isCoolingDown()) return;
 
-		const character = charactersData.characters[0];
 		const event = resolveEvent(
 			commandId,
 			state.params,
 			state.flags,
 			scenariosData.events as Parameters<typeof resolveEvent>[3],
 		);
-
 		if (!event) return;
 
+		get().applyEvent(event);
+		set({ cooldownUntil: Date.now() + COOLDOWN_MS });
+		get().checkAndApplyEnding();
+	},
+
+	applyEvent: (event) => {
+		const state = get();
+		const character = charactersData.characters[0];
+
 		const newParams: GameParameters = {
-			sweetness: clampParam(
-				state.params.sweetness + event.parameter_delta.sweetness,
-			),
-			curiosity: clampParam(
-				state.params.curiosity + event.parameter_delta.curiosity,
-			),
+			sweetness: clampParam(state.params.sweetness + event.parameter_delta.sweetness),
+			curiosity: clampParam(state.params.curiosity + event.parameter_delta.curiosity),
 			trust: clampParam(state.params.trust + event.parameter_delta.trust),
 		};
-
 		const newFlags = [...new Set([...state.flags, ...event.set_flags])];
-
 		const dialog: CurrentDialog = {
 			text: event.fallback_text,
 			speaker: character.name,
@@ -97,14 +111,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			background: event.background,
 		};
 
+		type ScenariosJson = { scenes?: Scene[]; events: ScenarioEvent[] };
+		const scenes = (scenariosData as unknown as ScenariosJson).scenes ?? [];
+		const newScene =
+			scenes.length > 0
+				? checkSceneProgression(state.currentScene, newFlags, newParams, scenes)
+				: null;
+
 		set({
 			params: newParams,
 			flags: newFlags,
 			currentDialog: dialog,
-			cooldownUntil: Date.now() + COOLDOWN_MS,
+			...(newScene ? { currentScene: newScene } : {}),
 		});
+	},
 
-		get().checkAndApplyEnding();
+	setCooldownUntil: (until) => set({ cooldownUntil: until }),
+
+	importSaves: (slots) => {
+		for (const slot of slots) {
+			localStorage.setItem(SAVE_KEY(slot.slot), JSON.stringify(slot));
+		}
+		set({ saveSlots: slots });
 	},
 
 	checkAndApplyEnding: () => {
