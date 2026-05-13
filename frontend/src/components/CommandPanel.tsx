@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useGameStore } from "../store/useGameStore";
 import commandsData from "../data/commands.json";
 import type { Command } from "../types";
+import { COOLDOWN_MS } from "../constants";
 
 const CATEGORIES = ["会話", "スキンシップ", "サポート", "提案"] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -42,14 +43,19 @@ const CATEGORY_COLORS: Record<
 
 const commands = commandsData.commands as Command[];
 
-export function CommandPanel() {
-	const applyCommand = useGameStore((s) => s.applyCommand);
+interface Props {
+	onCommand: (id: string) => void;
+	isProcessing: boolean;
+}
+
+export function CommandPanel({ onCommand, isProcessing }: Props) {
 	const cooldownUntil = useGameStore((s) => s.cooldownUntil);
 	const isEnded = useGameStore((s) => s.isEnded);
+	const displayMode = useGameStore((s) => s.displayMode);
 	const dialogKey = useGameStore(
 		(s) => s.currentDialog?.text.slice(0, 8) ?? "",
 	);
-	const [now, setNow] = useState(Date.now());
+	const [now, setNow] = useState(0);
 
 	useEffect(() => {
 		if (cooldownUntil <= Date.now()) return;
@@ -57,9 +63,12 @@ export function CommandPanel() {
 		return () => clearInterval(interval);
 	}, [cooldownUntil]);
 
-	const remaining = Math.max(0, cooldownUntil - now);
-	const cooldownProgress = remaining > 0 ? (remaining / 3000) * 100 : 0;
-	const isCooling = remaining > 0;
+	const remaining = now > 0 ? Math.max(0, cooldownUntil - now) : 0;
+	const cooldownProgress = remaining > 0 ? (remaining / COOLDOWN_MS) * 100 : 0;
+	const isCooling = remaining > 0 || isProcessing;
+
+	const forcePC = displayMode === "pc";
+	const forceMobile = displayMode === "mobile";
 
 	return (
 		<div className="bg-black/98 border-t border-purple-500/15 px-3 py-2 md:px-4 md:py-3">
@@ -72,13 +81,21 @@ export function CommandPanel() {
 			</div>
 
 			{/* デスクトップ: 4列グリッド */}
-			<div className="hidden md:grid md:grid-cols-4 gap-3">
+			<div
+				className={
+					forcePC
+						? "grid grid-cols-4 gap-3"
+						: forceMobile
+							? "hidden"
+							: "hidden md:grid md:grid-cols-4 gap-3"
+				}
+			>
 				{CATEGORIES.map((cat) => (
 					<CommandGroup
 						key={cat}
 						category={cat}
 						commands={commands.filter((c) => c.category === cat)}
-						onSelect={applyCommand}
+						onSelect={onCommand}
 						disabled={isCooling || isEnded}
 						dialogKey={dialogKey}
 					/>
@@ -86,13 +103,21 @@ export function CommandPanel() {
 			</div>
 
 			{/* モバイル: 2×2グリッド（カテゴリボタン） */}
-			<div className="md:hidden grid grid-cols-2 gap-2">
+			<div
+				className={
+					forceMobile
+						? "grid grid-cols-2 gap-2"
+						: forcePC
+							? "hidden"
+							: "md:hidden grid grid-cols-2 gap-2"
+				}
+			>
 				{CATEGORIES.map((cat) => (
 					<MobileCategoryButton
 						key={cat}
 						category={cat}
 						commands={commands.filter((c) => c.category === cat)}
-						onSelect={applyCommand}
+						onSelect={onCommand}
 						disabled={isCooling || isEnded}
 					/>
 				))}

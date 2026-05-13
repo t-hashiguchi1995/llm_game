@@ -1,4 +1,27 @@
 {
+  "scenes": [
+    {
+      "id": "scene-001",
+      "label": "深夜の内緒話",
+      "unlock_condition": {}
+    },
+    {
+      "id": "scene-002",
+      "label": "距離が縮まる",
+      "unlock_condition": {
+        "flags": ["comfort_offered"],
+        "sweetness": { "min": 60 }
+      }
+    },
+    {
+      "id": "scene-003",
+      "label": "二人だけの時間",
+      "unlock_condition": {
+        "sweetness": { "min": 75 },
+        "trust": { "min": 70 }
+      }
+    }
+  ],
   "events": [
     {
       "id": "evt-talk-001",
@@ -118,7 +141,7 @@
       "fallback_text": "な、撫でる？…っ、子ども扱いしないでよ。…でも、ちょっとだけならいいです。",
       "parameter_delta": { "sweetness": 10, "trust": 2, "curiosity": 3 },
       "set_flags": [],
-      "next_event": null
+      "next_event": "evt-touch-003-reaction"
     },
     {
       "id": "evt-touch-003-low",
@@ -177,7 +200,7 @@
       "background": "男性一人部屋３（夜・照明ON）.jpg",
       "fallback_text": "も、もう終わりましたから…平気です。全然こわくないです。…（少し震えている）",
       "parameter_delta": { "sweetness": 5, "trust": 10, "curiosity": 0 },
-      "set_flags": ["horror_event_done"],
+      "set_flags": ["comfort_offered"],
       "next_event": null
     },
     {
@@ -322,6 +345,42 @@
       "fallback_text": "明日も…？うん、会えると思う。配信あるけど、終わったら来ていいよ。…楽しみにしてるから。",
       "parameter_delta": { "sweetness": 8, "trust": 3, "curiosity": 0 },
       "set_flags": [],
+      "next_event": null
+    },
+    {
+      "id": "evt-touch-003-reaction",
+      "trigger": { "type": "chain" },
+      "condition": {},
+      "scene_context": "頭を撫でられた後の恥ずかしい反応",
+      "emotion": "embarrassed_2",
+      "background": "男性一人部屋３（夜・照明ON）.jpg",
+      "fallback_text": "…べ、別になでてもらいたかったわけじゃないですし。ちょっと温かいだけです。",
+      "parameter_delta": { "sweetness": 3, "curiosity": 0, "trust": 3 },
+      "set_flags": [],
+      "next_event": null
+    },
+    {
+      "id": "evt-auto-trust-high",
+      "trigger": { "type": "parameter" },
+      "condition": { "trust": { "min": 70 } },
+      "emotion": "happy_2",
+      "background": "男性一人部屋３（夜・照明ON）.jpg",
+      "scene_context": "安心感が高まり、素直な気持ちが出る",
+      "fallback_text": "…なんか、ここにいると、楽になれる気がします。",
+      "parameter_delta": { "sweetness": 2, "curiosity": 0, "trust": 0 },
+      "set_flags": ["_auto_fired_evt-auto-trust-high"],
+      "next_event": null
+    },
+    {
+      "id": "evt-auto-comfort-offered",
+      "trigger": { "type": "flag", "flag_id": "comfort_offered" },
+      "condition": {},
+      "emotion": "normal_2",
+      "background": "男性一人部屋３（夜・照明ON）.jpg",
+      "scene_context": "休息を勧めてくれた後の呟き",
+      "fallback_text": "…ありがとう。なんか、そういう言葉、久しぶりに聞いた気がします。",
+      "parameter_delta": { "sweetness": 3, "curiosity": 0, "trust": 5 },
+      "set_flags": ["_auto_fired_evt-auto-comfort-offered"],
       "next_event": null
     }
   ]

@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import { useGameStore } from "../store/useGameStore";
+import type { SaveSlot } from "../types";
 
 const SLOT_COUNT = 6;
 
@@ -11,6 +13,8 @@ export function SaveLoadModal({ onClose }: Props) {
 	const loadGame = useGameStore((s) => s.loadGame);
 	const saveSlots = useGameStore((s) => s.saveSlots);
 	const resetGame = useGameStore((s) => s.resetGame);
+	const importSaves = useGameStore((s) => s.importSaves);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	function getSlot(slot: number) {
 		return saveSlots.find((s) => s.slot === slot) ?? null;
@@ -26,6 +30,46 @@ export function SaveLoadModal({ onClose }: Props) {
 			resetGame();
 			onClose();
 		}
+	}
+
+	function handleExport() {
+		const slots = saveSlots;
+		const json = JSON.stringify(slots, null, 2);
+		const blob = new Blob([json], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `mssp_saves_${new Date().toISOString().slice(0, 10)}.json`;
+		a.click();
+		setTimeout(() => URL.revokeObjectURL(url), 100);
+	}
+
+	function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		const reader = new FileReader();
+		reader.onload = (ev) => {
+			try {
+				const slots = JSON.parse(ev.target?.result as string);
+				if (!Array.isArray(slots)) throw new Error("invalid format");
+				const isValidSlot = (s: unknown): s is SaveSlot =>
+					typeof s === "object" &&
+					s !== null &&
+					typeof (s as SaveSlot).slot === "number" &&
+					typeof (s as SaveSlot).timestamp === "string" &&
+					typeof (s as SaveSlot).currentScene === "string";
+				if (!slots.every(isValidSlot)) throw new Error("invalid slot shape");
+				importSaves(slots);
+				alert("インポートしました");
+				onClose();
+				e.target.value = "";
+			} catch {
+				alert("ファイルの形式が正しくありません");
+				e.target.value = "";
+			}
+		};
+		reader.onerror = () => alert("ファイルの読み込みに失敗しました");
+		reader.readAsText(file);
 	}
 
 	return (
@@ -105,6 +149,25 @@ export function SaveLoadModal({ onClose }: Props) {
 				>
 					ゲームをリセット
 				</button>
+
+				<div className="flex gap-2 mt-2">
+					<button
+						onClick={handleExport}
+						className="flex-1 text-xs py-2 rounded border border-green-500/30 text-green-400/70 hover:bg-green-500/10 hover:text-green-300"
+					>
+						JSON 書き出し
+					</button>
+					<label className="flex-1 text-xs py-2 rounded border border-yellow-500/30 text-yellow-400/70 hover:bg-yellow-500/10 hover:text-yellow-300 text-center cursor-pointer">
+						JSON 読み込み
+						<input
+							ref={fileInputRef}
+							type="file"
+							accept=".json"
+							className="hidden"
+							onChange={handleImport}
+						/>
+					</label>
+				</div>
 			</div>
 		</div>
 	);

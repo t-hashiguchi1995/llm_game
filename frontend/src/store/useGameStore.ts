@@ -4,17 +4,19 @@ import type {
 	GameParameters,
 	CurrentDialog,
 	SaveSlot,
+	DisplayMode,
+	TextSpeed,
+	ScenarioEvent,
+	Scene,
 } from "../types";
 import scenariosData from "../data/scenarios.json";
 import endingsData from "../data/endings.json";
 import charactersData from "../data/characters.json";
 import {
-	resolveEvent,
 	checkEnding,
 	clampParam,
+	checkSceneProgression,
 } from "../engine/scenarioEngine";
-
-const COOLDOWN_MS = 3000;
 const SAVE_KEY = (slot: number) => `mssp_save_slot_${slot}`;
 
 const INITIAL_PARAMS: GameParameters = {
@@ -39,34 +41,41 @@ const INITIAL_STATE: Omit<GameState, "saveSlots"> = {
 	endingId: null,
 	currentDialog: INITIAL_DIALOG,
 	cooldownUntil: 0,
+	displayMode: "auto",
+	textSpeed: "normal",
+	bgmVolume: 80,
+	seVolume: 80,
 };
 
 interface GameStore extends GameState {
-	applyCommand: (commandId: string) => void;
+	applyEvent: (event: ScenarioEvent) => void;
+	setCooldownUntil: (until: number) => void;
+	importSaves: (slots: SaveSlot[]) => void;
 	checkAndApplyEnding: () => void;
 	saveGame: (slot: number) => void;
 	loadGame: (slot: number) => boolean;
 	resetGame: () => void;
 	isCoolingDown: () => boolean;
+	setDisplayMode: (mode: DisplayMode) => void;
+	setTextSpeed: (speed: TextSpeed) => void;
+	setBgmVolume: (vol: number) => void;
+	setSeVolume: (vol: number) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
 	...INITIAL_STATE,
-	saveSlots: [],
+	saveSlots: Array.from({ length: 6 }, (_, i) => {
+		const raw = localStorage.getItem(SAVE_KEY(i));
+		try {
+			return raw ? (JSON.parse(raw) as SaveSlot) : null;
+		} catch {
+			return null;
+		}
+	}).filter((s): s is SaveSlot => s !== null),
 
-	applyCommand: (commandId) => {
+	applyEvent: (event) => {
 		const state = get();
-		if (state.isEnded || state.isCoolingDown()) return;
-
 		const character = charactersData.characters[0];
-		const event = resolveEvent(
-			commandId,
-			state.params,
-			state.flags,
-			scenariosData.events as Parameters<typeof resolveEvent>[3],
-		);
-
-		if (!event) return;
 
 		const newParams: GameParameters = {
 			sweetness: clampParam(
@@ -77,9 +86,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			),
 			trust: clampParam(state.params.trust + event.parameter_delta.trust),
 		};
-
-		const newFlags = [...new Set([...state.flags, ...event.set_flags])];
-
+		const baseFlags = [...new Set([...state.flags, ...event.set_flags])];
+		const newFlags =
+			event.trigger.type === "parameter" || event.trigger.type === "flag"
+				? [...new Set([...baseFlags, `_auto_fired_${event.id}`])]
+				: baseFlags;
 		const dialog: CurrentDialog = {
 			text: event.fallback_text,
 			speaker: character.name,
@@ -87,14 +98,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			background: event.background,
 		};
 
+		type ScenariosJson = { scenes?: Scene[]; events: ScenarioEvent[] };
+		const scenes = (scenariosData as unknown as ScenariosJson).scenes ?? [];
+		const newScene =
+			scenes.length > 0
+				? checkSceneProgression(state.currentScene, newFlags, newParams, scenes)
+				: null;
+
 		set({
 			params: newParams,
 			flags: newFlags,
 			currentDialog: dialog,
-			cooldownUntil: Date.now() + COOLDOWN_MS,
+			...(newScene ? { currentScene: newScene } : {}),
 		});
+	},
 
-		get().checkAndApplyEnding();
+	setCooldownUntil: (until) => set({ cooldownUntil: until }),
+
+	importSaves: (slots) => {
+		for (const slot of slots) {
+			localStorage.setItem(SAVE_KEY(slot.slot), JSON.stringify(slot));
+		}
+		set({ saveSlots: slots });
 	},
 
 	checkAndApplyEnding: () => {
@@ -150,4 +175,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	},
 
 	resetGame: () => set({ ...INITIAL_STATE, saveSlots: get().saveSlots }),
+
+	setDisplayMode: (mode) => set({ displayMode: mode }),
+	setTextSpeed: (speed) => set({ textSpeed: speed }),
+	setBgmVolume: (vol) => set({ bgmVolume: Math.min(100, Math.max(0, vol)) }),
+	setSeVolume: (vol) => set({ seVolume: Math.min(100, Math.max(0, vol)) }),
 }));

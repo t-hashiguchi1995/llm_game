@@ -16,10 +16,11 @@ export interface EventCondition {
 	flags?: string[];
 }
 
-export interface EventTrigger {
-	type: "command" | "parameter" | "flag";
-	command_id?: string;
-}
+export type EventTrigger =
+	| { type: "command"; command_id: string }
+	| { type: "flag"; flag_id: string }
+	| { type: "parameter" }
+	| { type: "chain" };
 
 export interface ParameterDelta {
 	sweetness: number;
@@ -90,6 +91,9 @@ export interface SaveSlot {
 	currentDialog: CurrentDialog | null;
 }
 
+export type DisplayMode = "auto" | "pc" | "mobile";
+export type TextSpeed = "slow" | "normal" | "fast";
+
 export interface GameState {
 	params: GameParameters;
 	currentScene: string;
@@ -100,4 +104,19 @@ export interface GameState {
 	endingId: string | null;
 	currentDialog: CurrentDialog | null;
 	cooldownUntil: number;
+	displayMode: DisplayMode;
+	textSpeed: TextSpeed;
+	bgmVolume: number;
+	seVolume: number;
+}
+
+export interface QueuedEvent {
+	event: ScenarioEvent;
+	delay: number;
+}
+
+export interface Scene {
+	id: string;
+	label: string;
+	unlock_condition: EventCondition;
 }
