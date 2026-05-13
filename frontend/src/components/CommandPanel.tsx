@@ -42,8 +42,12 @@ const CATEGORY_COLORS: Record<
 
 const commands = commandsData.commands as Command[];
 
-export function CommandPanel() {
-	const applyCommand = useGameStore((s) => s.applyCommand);
+interface Props {
+	onCommand: (id: string) => void;
+	isProcessing: boolean;
+}
+
+export function CommandPanel({ onCommand, isProcessing }: Props) {
 	const cooldownUntil = useGameStore((s) => s.cooldownUntil);
 	const isEnded = useGameStore((s) => s.isEnded);
 	const displayMode = useGameStore((s) => s.displayMode);
@@ -60,7 +64,7 @@ export function CommandPanel() {
 
 	const remaining = Math.max(0, cooldownUntil - now);
 	const cooldownProgress = remaining > 0 ? (remaining / 3000) * 100 : 0;
-	const isCooling = remaining > 0;
+	const isCooling = remaining > 0 || isProcessing;
 
 	const forcePC = displayMode === "pc";
 	const forceMobile = displayMode === "mobile";
@@ -90,7 +94,7 @@ export function CommandPanel() {
 						key={cat}
 						category={cat}
 						commands={commands.filter((c) => c.category === cat)}
-						onSelect={applyCommand}
+						onSelect={onCommand}
 						disabled={isCooling || isEnded}
 						dialogKey={dialogKey}
 					/>
@@ -112,7 +116,7 @@ export function CommandPanel() {
 						key={cat}
 						category={cat}
 						commands={commands.filter((c) => c.category === cat)}
-						onSelect={applyCommand}
+						onSelect={onCommand}
 						disabled={isCooling || isEnded}
 					/>
 				))}
